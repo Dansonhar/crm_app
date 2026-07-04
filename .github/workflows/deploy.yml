@@ -31,7 +31,9 @@ jobs:
         run: npm ci
 
       - name: Build
-        run: npm run build
+        # Served from https://dansonhar.github.io/crm_app/ (project Pages URL),
+        # so Vite must emit /crm_app/-prefixed asset paths.
+        run: npm run build -- --base=/crm_app/
 
       - name: SPA fallback (client-side routing on Pages)
         run: cp dist/index.html dist/404.html

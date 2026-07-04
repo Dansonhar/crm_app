@@ -5,7 +5,8 @@ import path from 'path'
 
 // https://vite.dev/config/
 export default defineConfig({
-  // Served from the custom domain root (crm.dansonhar.com), via the public/CNAME file.
+  // Default for local dev; the Actions workflow overrides this with
+  // --base=/crm_app/ at build time for the project Pages URL.
   base: '/',
   plugins: [react(), tailwindcss()],
   resolve: {
