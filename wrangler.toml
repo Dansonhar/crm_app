@@ -1,0 +1,10 @@
+name = "agencyflow-notify"
+main = "worker/index.js"
+compatibility_date = "2026-07-01"
+
+# Daily heartbeat at 09:00 Malaysia time (UTC+8)
+[triggers]
+crons = ["0 1 * * *"]
+
+# Secrets (TELEGRAM_BOT_TOKEN, TELEGRAM_BOT_USERNAME, NOTIFY_CHAT_ID, AGENCY_NAME)
+# are set via `wrangler secret put <NAME>`, not committed here.

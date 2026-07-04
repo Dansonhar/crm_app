@@ -48,3 +48,8 @@ secrets.*
 diag-*.mjs
 verify-*.mjs
 diag-*.png
+
+# Cloudflare Wrangler local state / local secrets
+.wrangler
+.dev.vars
+.cf-token

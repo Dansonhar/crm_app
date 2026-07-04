@@ -5,8 +5,7 @@ import path from 'path'
 
 // https://vite.dev/config/
 export default defineConfig({
-  // Default for local dev; the Actions workflow overrides this with
-  // --base=/crm_app/ at build time for the project Pages URL.
+  // Served from the root of a Cloudflare Pages domain (*.pages.dev or a custom domain).
   base: '/',
   plugins: [react(), tailwindcss()],
   resolve: {
