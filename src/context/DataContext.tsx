@@ -187,11 +187,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
       clientName: newProject.clientName,
     });
     notify(
-      formatNotification('New Project Created', {
-        Project: newProject.name,
-        Client: newProject.clientName,
-        Budget: `$${newProject.budget.toLocaleString()}`,
-        Deadline: newProject.deadline,
+      formatNotification('📁 New Project Created', {
+        '🛠️ Project': newProject.name,
+        '🏢 Client': newProject.clientName,
+        '💰 Budget': `$${newProject.budget.toLocaleString()}`,
+        '📅 Deadline': newProject.deadline,
       }),
     );
     return newProject;
@@ -266,11 +266,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
       clientName: newInvoice.clientName,
     });
     notify(
-      formatNotification('New Invoice Issued', {
-        Invoice: newInvoice.number,
-        Client: newInvoice.clientName,
-        Amount: `$${newInvoice.amount.toLocaleString()}`,
-        'Due Date': newInvoice.dueDate,
+      formatNotification('🧾 New Invoice Issued', {
+        '🧾 Invoice': newInvoice.number,
+        '🏢 Client': newInvoice.clientName,
+        '💰 Amount': `$${newInvoice.amount.toLocaleString()}`,
+        '📅 Due Date': newInvoice.dueDate,
       }),
     );
     return newInvoice;
@@ -288,10 +288,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
       });
       if (updates.status === 'paid') {
         notify(
-          formatNotification('Payment Received', {
-            Invoice: invoice.number,
-            Client: invoice.clientName,
-            Amount: `$${invoice.amount.toLocaleString()}`,
+          formatNotification('💰 Payment Received', {
+            '🧾 Invoice': invoice.number,
+            '🏢 Client': invoice.clientName,
+            '💰 Amount': `$${invoice.amount.toLocaleString()}`,
           }),
         );
       }
@@ -374,12 +374,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
       clientName: newLead.clientName,
     });
     notify(
-      formatNotification('New Lead Added', {
-        Contact: newLead.clientName,
-        Company: newLead.company,
-        'Deal Value': `$${newLead.dealValue.toLocaleString()}`,
-        Source: newLead.source,
-        Priority: newLead.priority.charAt(0).toUpperCase() + newLead.priority.slice(1),
+      formatNotification('🆕 New Lead Added', {
+        '👤 Contact': newLead.clientName,
+        '🏢 Company': newLead.company,
+        '💰 Deal Value': `$${newLead.dealValue.toLocaleString()}`,
+        '📣 Source': newLead.source,
+        '🔥 Priority': newLead.priority.charAt(0).toUpperCase() + newLead.priority.slice(1),
       }),
     );
     return newLead;
@@ -396,18 +396,18 @@ export function DataProvider({ children }: { children: ReactNode }) {
       });
       if (updates.stage === 'won') {
         notify(
-          formatNotification('Deal Won', {
-            Client: lead.clientName,
-            Company: lead.company,
-            'Deal Value': `$${lead.dealValue.toLocaleString()}`,
+          formatNotification('🎉 Deal Won', {
+            '👤 Client': lead.clientName,
+            '🏢 Company': lead.company,
+            '💰 Deal Value': `$${lead.dealValue.toLocaleString()}`,
           }),
         );
       } else if (updates.stage === 'lost') {
         notify(
-          formatNotification('Deal Lost', {
-            Client: lead.clientName,
-            Company: lead.company,
-            'Deal Value': `$${lead.dealValue.toLocaleString()}`,
+          formatNotification('📉 Deal Lost', {
+            '👤 Client': lead.clientName,
+            '🏢 Company': lead.company,
+            '💰 Deal Value': `$${lead.dealValue.toLocaleString()}`,
           }),
         );
       }

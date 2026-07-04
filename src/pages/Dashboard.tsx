@@ -101,32 +101,32 @@ export function Dashboard() {
   function buildExecutiveSummary() {
     const outlook =
       REVENUE_TREND >= 0
-        ? `Revenue is trending up ${REVENUE_TREND}% vs last month — performance looks healthy.`
-        : `Revenue is down ${Math.abs(REVENUE_TREND)}% vs last month — worth reviewing the pipeline.`;
+        ? `📈 Revenue is trending up ${REVENUE_TREND}% vs last month — performance looks healthy.`
+        : `📉 Revenue is down ${Math.abs(REVENUE_TREND)}% vs last month — worth reviewing the pipeline.`;
 
     return formatReport(
-      'Executive Summary',
+      '📊 Executive Summary',
       new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
       [
         {
-          heading: 'Business Snapshot',
+          heading: '🏢 Business Snapshot',
           lines: [
-            `Total Clients: ${clients.length} (${CLIENTS_TREND >= 0 ? '+' : ''}${CLIENTS_TREND}% vs last month)`,
-            `Active Projects: ${activeProjects} (${PROJECTS_TREND >= 0 ? '+' : ''}${PROJECTS_TREND}% vs last month)`,
-            `Pending Invoices: ${pendingInvoices} (${INVOICES_TREND >= 0 ? '+' : ''}${INVOICES_TREND}% vs last month)`,
-            `Monthly Revenue: ${formatCurrency(monthlyRevenue)} (${REVENUE_TREND >= 0 ? '+' : ''}${REVENUE_TREND}% vs last month)`,
+            `👥 Total Clients: ${clients.length} (${CLIENTS_TREND >= 0 ? '+' : ''}${CLIENTS_TREND}% vs last month)`,
+            `📁 Active Projects: ${activeProjects} (${PROJECTS_TREND >= 0 ? '+' : ''}${PROJECTS_TREND}% vs last month)`,
+            `🧾 Pending Invoices: ${pendingInvoices} (${INVOICES_TREND >= 0 ? '+' : ''}${INVOICES_TREND}% vs last month)`,
+            `💰 Monthly Revenue: ${formatCurrency(monthlyRevenue)} (${REVENUE_TREND >= 0 ? '+' : ''}${REVENUE_TREND}% vs last month)`,
           ],
         },
         {
-          heading: 'Sales Pipeline',
+          heading: '💼 Sales Pipeline',
           lines: [
-            `Active Deals: ${activeDeals.length} worth ${formatCurrency(pipelineValue)}`,
-            `Deals Won (Total): ${wonDeals.length}`,
-            `Deals Lost (Total): ${lostDeals.length}`,
+            `🎯 Active Deals: ${activeDeals.length} worth ${formatCurrency(pipelineValue)}`,
+            `✅ Deals Won (Total): ${wonDeals.length}`,
+            `❌ Deals Lost (Total): ${lostDeals.length}`,
           ],
         },
         {
-          heading: 'Outlook',
+          heading: '🔭 Outlook',
           lines: [outlook],
         },
       ],
