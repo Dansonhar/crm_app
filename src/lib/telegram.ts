@@ -1,4 +1,12 @@
+// Local dev: relay through the Express backend (npm run server).
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
+
+// Production (GitHub Pages): dispatch a GitHub Actions workflow run instead,
+// since Pages can't host a server. The token is baked into this static build
+// by the deploy workflow — see .github/workflows/deploy.yml and notify.yml.
+const GITHUB_DISPATCH_TOKEN = import.meta.env.VITE_GITHUB_DISPATCH_TOKEN as string | undefined;
+const GITHUB_REPO = 'Dansonhar/crm_app';
+const GITHUB_WORKFLOW = 'notify.yml';
 
 async function apiFetch(path: string, init?: RequestInit) {
   let response: Response;
@@ -14,20 +22,42 @@ async function apiFetch(path: string, init?: RequestInit) {
   return data;
 }
 
+async function dispatchGitHubWorkflow(message: string, chatId?: string) {
+  const response = await fetch(
+    `https://api.github.com/repos/${GITHUB_REPO}/actions/workflows/${GITHUB_WORKFLOW}/dispatches`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${GITHUB_DISPATCH_TOKEN}`,
+        Accept: 'application/vnd.github+json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ ref: 'main', inputs: chatId ? { message, chat_id: chatId } : { message } }),
+    },
+  );
+  if (response.status !== 204) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.message || `GitHub Actions dispatch failed (${response.status})`);
+  }
+  return { ok: true as const, queued: true as const };
+}
+
 export async function sendTelegramMessage(chatId: string, message: string) {
+  if (GITHUB_DISPATCH_TOKEN) return dispatchGitHubWorkflow(message, chatId);
   return apiFetch('/api/send-message', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ chatId, message }),
-  }) as Promise<{ ok: true; messageId: number }>;
+  }) as Promise<{ ok: true; queued?: true }>;
 }
 
 export async function notifyTeam(text: string) {
+  if (GITHUB_DISPATCH_TOKEN) return dispatchGitHubWorkflow(text);
   return apiFetch('/api/notify', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ text }),
-  }) as Promise<{ ok: true; messageId: number }>;
+  }) as Promise<{ ok: true; queued?: true }>;
 }
 
 function escapeHtml(value: string) {
@@ -96,20 +126,4 @@ export function formatSummaryAlert(subtitle: string, sections: ReportSection[], 
     `⏰ ${formatTimestamp(timestamp)}`,
   ];
   return parts.join('\n');
-}
-
-export interface TelegramChat {
-  chatId: string;
-  name: string | null;
-  username: string | null;
-}
-
-export async function getTelegramChats() {
-  const data = await apiFetch('/api/telegram/updates');
-  return data.chats as TelegramChat[];
-}
-
-export async function getBotInfo() {
-  const data = await apiFetch('/api/health');
-  return data as { status: string; bot: string | null; agency: string; notifyChatConfigured: boolean };
 }

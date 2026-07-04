@@ -25,6 +25,7 @@ import {
 } from 'recharts';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { InsightBot } from '@/components/dashboard/InsightBot';
 import { StatCard } from '@/components/ui/StatCard';
 import { Avatar } from '@/components/ui/Avatar';
 import { PriorityBadge } from '@/components/ui/Badge';
@@ -156,7 +157,7 @@ export function Dashboard() {
     try {
       await notifyTeam(buildExecutiveSummary());
       localStorage.setItem(SUMMARY_STORAGE_KEY, new Date().toISOString().slice(0, 10));
-      showToast('Executive summary sent to Telegram.', 'success');
+      showToast('Executive summary queued for Telegram — check the chat in a few seconds.', 'success');
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Failed to send summary.', 'error');
     } finally {
@@ -217,6 +218,8 @@ export function Dashboard() {
           iconClass="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
         />
       </div>
+
+      <InsightBot />
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <Card className="xl:col-span-2">

@@ -104,7 +104,7 @@ export function ClientDetail() {
     try {
       await sendTelegramMessage(client.telegramChatId, messageText.trim());
       logMessageSent(clientId, client.name, messageText.trim().slice(0, 80));
-      showToast(`Message sent to ${client.name} via Telegram, from AgencyFlow.`, 'success');
+      showToast(`Message queued for ${client.name} via Telegram — check the chat in a few seconds.`, 'success');
       setMessageText('');
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Failed to send message.', 'error');

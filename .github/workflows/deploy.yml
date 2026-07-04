@@ -33,6 +33,10 @@ jobs:
       - name: Build
         # Served from https://dansonhar.github.io/crm_app/ (project Pages URL),
         # so Vite must emit /crm_app/-prefixed asset paths.
+        # VITE_GITHUB_DISPATCH_TOKEN lets the deployed (static, backend-less) site
+        # trigger the notify.yml workflow directly — see src/lib/telegram.ts.
+        env:
+          VITE_GITHUB_DISPATCH_TOKEN: ${{ secrets.WORKFLOW_DISPATCH_TOKEN }}
         run: npm run build -- --base=/crm_app/
 
       - name: SPA fallback (client-side routing on Pages)
