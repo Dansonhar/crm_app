@@ -77,8 +77,9 @@ app.post('/api/notify', async (req, res) => {
     return res.status(500).json({ error: 'NOTIFY_CHAT_ID is not set on the server' });
   }
   try {
-    const signedMessage = `🏢 <b>${AGENCY_NAME} CRM</b>\n<i>🤖 Automated Notification</i>\n\n${text}`;
-    const result = await sendTelegramMessage(BOT_TOKEN, NOTIFY_CHAT_ID, signedMessage, { parseMode: 'HTML' });
+    // The frontend builds the full formatted alert card (header, dividers, timestamp) itself,
+    // so it can tailor the layout per event type — just relay it as-is.
+    const result = await sendTelegramMessage(BOT_TOKEN, NOTIFY_CHAT_ID, text, { parseMode: 'HTML' });
     res.json({ ok: true, messageId: result.message_id });
   } catch (err) {
     res.status(502).json({ error: err.message });

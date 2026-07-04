@@ -33,7 +33,7 @@ import { useData } from '@/context/DataContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { formatCurrency, formatShortDate, timeAgo } from '@/lib/utils';
-import { notifyTeam, formatReport } from '@/lib/telegram';
+import { notifyTeam, formatSummaryAlert } from '@/lib/telegram';
 import type { ActivityType, LeadStage } from '@/types';
 
 const SUMMARY_STORAGE_KEY = 'agencyflow-last-summary-date';
@@ -103,9 +103,12 @@ export function Dashboard() {
       REVENUE_TREND >= 0
         ? `📈 Revenue is trending up ${REVENUE_TREND}% vs last month — performance looks healthy.`
         : `📉 Revenue is down ${Math.abs(REVENUE_TREND)}% vs last month — worth reviewing the pipeline.`;
+    const focusLines =
+      REVENUE_TREND >= 0
+        ? ['Maintain the current sales cadence', 'Keep nurturing active pipeline deals']
+        : ['Review pipeline conversion bottlenecks', 'Prioritize outreach on high-value active deals'];
 
-    return formatReport(
-      '📊 Executive Summary',
+    return formatSummaryAlert(
       new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
       [
         {
@@ -114,7 +117,7 @@ export function Dashboard() {
             `👥 Total Clients: ${clients.length} (${CLIENTS_TREND >= 0 ? '+' : ''}${CLIENTS_TREND}% vs last month)`,
             `📁 Active Projects: ${activeProjects} (${PROJECTS_TREND >= 0 ? '+' : ''}${PROJECTS_TREND}% vs last month)`,
             `🧾 Pending Invoices: ${pendingInvoices} (${INVOICES_TREND >= 0 ? '+' : ''}${INVOICES_TREND}% vs last month)`,
-            `💰 Monthly Revenue: ${formatCurrency(monthlyRevenue)} (${REVENUE_TREND >= 0 ? '+' : ''}${REVENUE_TREND}% vs last month)`,
+            `💵 Monthly Revenue: ${formatCurrency(monthlyRevenue)} (${REVENUE_TREND >= 0 ? '+' : ''}${REVENUE_TREND}% vs last month)`,
           ],
         },
         {
@@ -128,6 +131,10 @@ export function Dashboard() {
         {
           heading: '🔭 Outlook',
           lines: [outlook],
+        },
+        {
+          heading: '🎯 Recommended Focus',
+          lines: focusLines.map((l) => `• ${l}`),
         },
       ],
     );

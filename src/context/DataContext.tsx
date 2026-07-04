@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
-import { notifyTeam, formatNotification } from '@/lib/telegram';
+import { notifyTeam, formatEventAlert, priorityEmoji } from '@/lib/telegram';
 import {
   clients as seedClients,
   projects as seedProjects,
@@ -187,12 +187,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
       clientName: newProject.clientName,
     });
     notify(
-      formatNotification('📁 New Project Created', {
-        '🛠️ Project': newProject.name,
-        '🏢 Client': newProject.clientName,
-        '💰 Budget': `$${newProject.budget.toLocaleString()}`,
-        '📅 Deadline': newProject.deadline,
-      }),
+      formatEventAlert(
+        '📁 A new project has been created.',
+        [
+          { label: '🛠️ Project', value: newProject.name },
+          { label: '🏢 Client', value: newProject.clientName },
+          { label: '💵 Budget', value: `$${newProject.budget.toLocaleString()}`, bold: true },
+          { label: '📅 Deadline', value: newProject.deadline },
+        ],
+        ['Confirm the kickoff date with the client', 'Assign team members', 'Set milestone check-ins'],
+      ),
     );
     return newProject;
   }
@@ -266,12 +270,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
       clientName: newInvoice.clientName,
     });
     notify(
-      formatNotification('🧾 New Invoice Issued', {
-        '🧾 Invoice': newInvoice.number,
-        '🏢 Client': newInvoice.clientName,
-        '💰 Amount': `$${newInvoice.amount.toLocaleString()}`,
-        '📅 Due Date': newInvoice.dueDate,
-      }),
+      formatEventAlert(
+        '🧾 A new invoice has been issued.',
+        [
+          { label: '🧾 Invoice', value: newInvoice.number },
+          { label: '🏢 Client', value: newInvoice.clientName },
+          { label: '💵 Amount', value: `$${newInvoice.amount.toLocaleString()}`, bold: true },
+          { label: '📅 Due Date', value: newInvoice.dueDate },
+        ],
+        ['Confirm the invoice was sent to the client', 'Add to accounts receivable tracking', 'Set a payment reminder'],
+      ),
     );
     return newInvoice;
   }
@@ -288,11 +296,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
       });
       if (updates.status === 'paid') {
         notify(
-          formatNotification('💰 Payment Received', {
-            '🧾 Invoice': invoice.number,
-            '🏢 Client': invoice.clientName,
-            '💰 Amount': `$${invoice.amount.toLocaleString()}`,
-          }),
+          formatEventAlert(
+            '💰 A payment has been received.',
+            [
+              { label: '🧾 Invoice', value: invoice.number },
+              { label: '🏢 Client', value: invoice.clientName },
+              { label: '💵 Amount', value: `$${invoice.amount.toLocaleString()}`, bold: true },
+            ],
+            ['Confirm funds received in accounting', 'Send a receipt or thank-you note', 'Update the invoice status in your records'],
+          ),
         );
       }
     }
@@ -374,13 +386,21 @@ export function DataProvider({ children }: { children: ReactNode }) {
       clientName: newLead.clientName,
     });
     notify(
-      formatNotification('🆕 New Lead Added', {
-        '👤 Contact': newLead.clientName,
-        '🏢 Company': newLead.company,
-        '💰 Deal Value': `$${newLead.dealValue.toLocaleString()}`,
-        '📣 Source': newLead.source,
-        '🔥 Priority': newLead.priority.charAt(0).toUpperCase() + newLead.priority.slice(1),
-      }),
+      formatEventAlert(
+        '🆕 A new sales lead has entered the pipeline.',
+        [
+          { label: '👤 Contact', value: newLead.clientName },
+          { label: '🏢 Company', value: newLead.company },
+          { label: '💵 Deal Value', value: `$${newLead.dealValue.toLocaleString()}`, bold: true },
+          { label: '📣 Source', value: newLead.source },
+          {
+            label: '🔥 Priority',
+            value: `${priorityEmoji(newLead.priority)} ${newLead.priority.charAt(0).toUpperCase() + newLead.priority.slice(1)}`,
+          },
+          { label: '📍 Pipeline Stage', value: stageDisplayLabels[newLead.stage] },
+        ],
+        ['Contact the lead within 24 hours', 'Assign an account manager', 'Schedule an introduction meeting'],
+      ),
     );
     return newLead;
   }
@@ -396,19 +416,27 @@ export function DataProvider({ children }: { children: ReactNode }) {
       });
       if (updates.stage === 'won') {
         notify(
-          formatNotification('🎉 Deal Won', {
-            '👤 Client': lead.clientName,
-            '🏢 Company': lead.company,
-            '💰 Deal Value': `$${lead.dealValue.toLocaleString()}`,
-          }),
+          formatEventAlert(
+            '🎉 A deal has been won — congratulations!',
+            [
+              { label: '👤 Client', value: lead.clientName },
+              { label: '🏢 Company', value: lead.company },
+              { label: '💵 Deal Value', value: `$${lead.dealValue.toLocaleString()}`, bold: true },
+            ],
+            ['Kick off client onboarding', 'Assign a project owner', 'Send the welcome package and contract'],
+          ),
         );
       } else if (updates.stage === 'lost') {
         notify(
-          formatNotification('📉 Deal Lost', {
-            '👤 Client': lead.clientName,
-            '🏢 Company': lead.company,
-            '💰 Deal Value': `$${lead.dealValue.toLocaleString()}`,
-          }),
+          formatEventAlert(
+            '📉 A deal was marked as lost.',
+            [
+              { label: '👤 Client', value: lead.clientName },
+              { label: '🏢 Company', value: lead.company },
+              { label: '💵 Deal Value', value: `$${lead.dealValue.toLocaleString()}` },
+            ],
+            ['Log the reason for the loss', 'Review the pipeline for lessons learned', 'Re-engage in 90 days'],
+          ),
         );
       }
     }
@@ -492,6 +520,15 @@ function formatProjectStatus(status: ProjectStatus) {
 function formatLeadStage(stage: LeadStage) {
   return stage[0].toUpperCase() + stage.slice(1);
 }
+
+const stageDisplayLabels: Record<LeadStage, string> = {
+  new: 'New Lead',
+  contacted: 'Contacted',
+  proposal: 'Proposal Sent',
+  negotiation: 'Negotiation',
+  won: 'Won',
+  lost: 'Lost',
+};
 
 export function useData() {
   const ctx = useContext(DataContext);

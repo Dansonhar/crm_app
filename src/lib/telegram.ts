@@ -34,11 +34,44 @@ function escapeHtml(value: string) {
   return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-export function formatNotification(title: string, fields: Record<string, string>) {
-  const lines = Object.entries(fields).map(
-    ([label, value]) => `<b>${escapeHtml(label)}:</b> ${escapeHtml(value)}`,
+const DIVIDER = '━━━━━━━━━━━━━━━━━━';
+
+function formatTimestamp(date: Date) {
+  const datePart = date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  const timePart = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  return `${datePart} • ${timePart}`;
+}
+
+export function priorityEmoji(priority: string) {
+  if (priority === 'high') return '🔴';
+  if (priority === 'low') return '🟢';
+  return '🟡';
+}
+
+export interface AlertField {
+  label: string;
+  value: string;
+  bold?: boolean;
+}
+
+export function formatEventAlert(intro: string, fields: AlertField[], actions?: string[], timestamp = new Date()) {
+  const fieldLines = fields.map(
+    (f) => `<b>${escapeHtml(f.label)}:</b> ${f.bold ? `<b>${escapeHtml(f.value)}</b>` : escapeHtml(f.value)}`,
   );
-  return `<b>${escapeHtml(title)}</b>\n\n${lines.join('\n')}`;
+  const parts = [
+    '🔔 <b>AgencyFlow CRM Alert</b>',
+    '',
+    escapeHtml(intro),
+    '',
+    DIVIDER,
+    ...fieldLines,
+    DIVIDER,
+  ];
+  if (actions && actions.length > 0) {
+    parts.push('', '✅ <b>Recommended Action</b>', ...actions.map((a) => `• ${escapeHtml(a)}`));
+  }
+  parts.push('', `⏰ ${formatTimestamp(timestamp)}`);
+  return parts.join('\n');
 }
 
 export interface ReportSection {
@@ -46,11 +79,23 @@ export interface ReportSection {
   lines: string[];
 }
 
-export function formatReport(title: string, subtitle: string, sections: ReportSection[]) {
+export function formatSummaryAlert(subtitle: string, sections: ReportSection[], timestamp = new Date()) {
   const body = sections
     .map((s) => `<b>${escapeHtml(s.heading)}</b>\n${s.lines.map(escapeHtml).join('\n')}`)
     .join('\n\n');
-  return `<b>${escapeHtml(title)}</b>\n<i>${escapeHtml(subtitle)}</i>\n\n${body}`;
+  const parts = [
+    '🔔 <b>AgencyFlow CRM Alert</b>',
+    '',
+    '📊 <b>Executive Summary</b>',
+    `<i>${escapeHtml(subtitle)}</i>`,
+    '',
+    DIVIDER,
+    body,
+    DIVIDER,
+    '',
+    `⏰ ${formatTimestamp(timestamp)}`,
+  ];
+  return parts.join('\n');
 }
 
 export interface TelegramChat {
