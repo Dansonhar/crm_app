@@ -118,7 +118,7 @@ export function AddProjectModal({
             />
           </div>
           <div>
-            <FieldLabel>Budget ($)</FieldLabel>
+            <FieldLabel>Budget (RM)</FieldLabel>
             <input
               type="number"
               value={form.budget}

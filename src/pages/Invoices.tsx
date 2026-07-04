@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { CheckCircle2, Clock, AlertTriangle, DollarSign, Plus, Search, ChevronRight, Trash2 } from 'lucide-react';
+import { CheckCircle2, Clock, AlertTriangle, Banknote, Plus, Search, ChevronRight, Trash2 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { StatCard } from '@/components/ui/StatCard';
@@ -100,7 +100,7 @@ export function Invoices() {
       />
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Total Billed" value={formatCurrency(totals.total)} icon={DollarSign} iconClass="bg-brand-500/10 text-brand-600 dark:text-brand-400" />
+        <StatCard label="Total Billed" value={formatCurrency(totals.total)} icon={Banknote} iconClass="bg-brand-500/10 text-brand-600 dark:text-brand-400" />
         <StatCard label="Paid" value={formatCurrency(totals.paid)} icon={CheckCircle2} iconClass="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" />
         <StatCard label="Pending" value={formatCurrency(totals.pending)} icon={Clock} iconClass="bg-amber-500/10 text-amber-600 dark:text-amber-400" />
         <StatCard label="Overdue" value={formatCurrency(totals.overdue)} icon={AlertTriangle} iconClass="bg-rose-500/10 text-rose-600 dark:text-rose-400" />
@@ -225,7 +225,7 @@ export function Invoices() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <FieldLabel>Amount ($)</FieldLabel>
+              <FieldLabel>Amount (RM)</FieldLabel>
               <input
                 type="number"
                 value={form.amount}

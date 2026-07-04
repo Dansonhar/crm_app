@@ -268,7 +268,8 @@ export function Settings() {
                   </div>
                   <div>
                     <FieldLabel>Default Currency</FieldLabel>
-                    <select className={inputClass} defaultValue="USD">
+                    <select className={inputClass} defaultValue="MYR">
+                      <option>MYR</option>
                       <option>USD</option>
                       <option>EUR</option>
                       <option>GBP</option>
@@ -401,7 +402,7 @@ export function Settings() {
                 <div className="rounded-xl bg-gradient-to-br from-brand-500/10 to-brand-700/10 p-5 dark:from-brand-500/15 dark:to-brand-900/20">
                   <p className="text-xs font-semibold uppercase tracking-wide text-brand-600 dark:text-brand-400">Current Plan</p>
                   <p className="mt-1 text-xl font-bold text-slate-900 dark:text-white">Agency Pro</p>
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">$149/month &middot; billed annually</p>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">RM149/month &middot; billed annually</p>
                   <button
                     onClick={() => showToast('This is a demo workspace — billing is not connected to a real payment processor.', 'info')}
                     className="mt-4 rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-600"

@@ -414,7 +414,7 @@ export const tasks: Task[] = [
 
 export const activities: Activity[] = [
   { id: 'a1', type: 'invoice', description: 'Invoice INV-2049 sent to Lumen Retail Group', timestamp: '2026-07-04T09:15:00', clientId: 'c1', clientName: 'Lumen Retail Group' },
-  { id: 'a2', type: 'deal', description: 'Aria Beauty Lab deal marked as Won ($46,500)', timestamp: '2026-07-03T16:40:00', clientId: 'c7', clientName: 'Aria Beauty Lab' },
+  { id: 'a2', type: 'deal', description: 'Aria Beauty Lab deal marked as Won (RM46,500)', timestamp: '2026-07-03T16:40:00', clientId: 'c7', clientName: 'Aria Beauty Lab' },
   { id: 'a3', type: 'email', description: 'Follow-up email sent to Nina Kowalski', timestamp: '2026-07-03T14:05:00', clientId: 'c9', clientName: 'Pixel & Pine Studio' },
   { id: 'a4', type: 'meeting', description: 'Discovery call completed with Solstice Athletics', timestamp: '2026-07-02T11:30:00', clientId: 'c4', clientName: 'Solstice Athletics' },
   { id: 'a5', type: 'note', description: 'Added note about Q3 renewal terms', timestamp: '2026-07-02T10:00:00', clientId: 'c2', clientName: 'Northwind Financial' },

@@ -101,7 +101,7 @@ export function LeadModal({ open, onClose, lead }: { open: boolean; onClose: () 
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <FieldLabel>Deal Value ($)</FieldLabel>
+            <FieldLabel>Deal Value (RM)</FieldLabel>
             <input
               type="number"
               value={form.dealValue}

@@ -3,7 +3,7 @@ import {
   Users,
   FolderKanban,
   Receipt,
-  DollarSign,
+  Banknote,
   Phone,
   Mail,
   Calendar,
@@ -211,7 +211,7 @@ export function Dashboard() {
         <StatCard
           label="Monthly Revenue"
           value={formatCurrency(monthlyRevenue)}
-          icon={DollarSign}
+          icon={Banknote}
           trend={REVENUE_TREND}
           trendLabel="vs last month"
           iconClass="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
@@ -252,7 +252,7 @@ export function Dashboard() {
                   tickLine={false}
                   axisLine={false}
                   tick={{ fontSize: 12, fill: '#94a3b8' }}
-                  tickFormatter={(v) => `$${v / 1000}k`}
+                  tickFormatter={(v) => `RM${v / 1000}k`}
                   width={44}
                 />
                 <Tooltip

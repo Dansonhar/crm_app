@@ -192,7 +192,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         [
           { label: '🛠️ Project', value: newProject.name },
           { label: '🏢 Client', value: newProject.clientName },
-          { label: '💵 Budget', value: `$${newProject.budget.toLocaleString()}`, bold: true },
+          { label: '💵 Budget', value: `RM${newProject.budget.toLocaleString()}`, bold: true },
           { label: '📅 Deadline', value: newProject.deadline },
         ],
         ['Confirm the kickoff date with the client', 'Assign team members', 'Set milestone check-ins'],
@@ -275,7 +275,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         [
           { label: '🧾 Invoice', value: newInvoice.number },
           { label: '🏢 Client', value: newInvoice.clientName },
-          { label: '💵 Amount', value: `$${newInvoice.amount.toLocaleString()}`, bold: true },
+          { label: '💵 Amount', value: `RM${newInvoice.amount.toLocaleString()}`, bold: true },
           { label: '📅 Due Date', value: newInvoice.dueDate },
         ],
         ['Confirm the invoice was sent to the client', 'Add to accounts receivable tracking', 'Set a payment reminder'],
@@ -301,7 +301,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
             [
               { label: '🧾 Invoice', value: invoice.number },
               { label: '🏢 Client', value: invoice.clientName },
-              { label: '💵 Amount', value: `$${invoice.amount.toLocaleString()}`, bold: true },
+              { label: '💵 Amount', value: `RM${invoice.amount.toLocaleString()}`, bold: true },
             ],
             ['Confirm funds received in accounting', 'Send a receipt or thank-you note', 'Update the invoice status in your records'],
           ),
@@ -391,7 +391,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         [
           { label: '👤 Contact', value: newLead.clientName },
           { label: '🏢 Company', value: newLead.company },
-          { label: '💵 Deal Value', value: `$${newLead.dealValue.toLocaleString()}`, bold: true },
+          { label: '💵 Deal Value', value: `RM${newLead.dealValue.toLocaleString()}`, bold: true },
           { label: '📣 Source', value: newLead.source },
           {
             label: '🔥 Priority',
@@ -421,7 +421,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
             [
               { label: '👤 Client', value: lead.clientName },
               { label: '🏢 Company', value: lead.company },
-              { label: '💵 Deal Value', value: `$${lead.dealValue.toLocaleString()}`, bold: true },
+              { label: '💵 Deal Value', value: `RM${lead.dealValue.toLocaleString()}`, bold: true },
             ],
             ['Kick off client onboarding', 'Assign a project owner', 'Send the welcome package and contract'],
           ),
@@ -433,7 +433,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
             [
               { label: '👤 Client', value: lead.clientName },
               { label: '🏢 Company', value: lead.company },
-              { label: '💵 Deal Value', value: `$${lead.dealValue.toLocaleString()}` },
+              { label: '💵 Deal Value', value: `RM${lead.dealValue.toLocaleString()}` },
             ],
             ['Log the reason for the loss', 'Review the pipeline for lessons learned', 'Re-engage in 90 days'],
           ),
