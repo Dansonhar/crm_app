@@ -66,7 +66,7 @@ export function LeadsPipeline() {
       />
 
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-        <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin">
+        <div className="flex flex-col gap-4 sm:flex-row sm:gap-4 sm:overflow-x-auto sm:pb-4 sm:scrollbar-thin">
           {columns.map((col) => (
             <KanbanColumn
               key={col.stage}

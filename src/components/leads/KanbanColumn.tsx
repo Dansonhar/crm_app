@@ -22,7 +22,7 @@ export function KanbanColumn({
   const totalValue = leads.reduce((sum, l) => sum + l.dealValue, 0);
 
   return (
-    <div className="flex w-72 shrink-0 flex-col">
+    <div className="flex w-full flex-col sm:w-72 sm:shrink-0">
       <div className="mb-3 flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
           <span className={cn('size-2 rounded-full', accent)} />
