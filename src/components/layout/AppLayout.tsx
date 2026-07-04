@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
+import { InsightBot } from '@/components/dashboard/InsightBot';
 
 export function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -15,6 +16,7 @@ export function AppLayout() {
           <Outlet />
         </main>
       </div>
+      <InsightBot />
     </div>
   );
 }
