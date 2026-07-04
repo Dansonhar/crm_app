@@ -22,3 +22,29 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Secrets, credentials, and account/config info
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.cer
+*.crt
+*credentials*
+*secret*
+*.secrets
+serviceAccount*.json
+firebase-adminsdk*.json
+*.tokens
+.npmrc
+.netrc
+config.local.*
+secrets.*
+
+# Local diagnostic / verification scripts and screenshots (throwaway)
+diag-*.mjs
+verify-*.mjs
+diag-*.png
