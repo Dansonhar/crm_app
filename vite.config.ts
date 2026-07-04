@@ -5,8 +5,8 @@ import path from 'path'
 
 // https://vite.dev/config/
 export default defineConfig({
-  // Served from https://<user>.github.io/crm_app/ on GitHub Pages.
-  base: process.env.GITHUB_PAGES ? '/crm_app/' : '/',
+  // Served from the custom domain root (crm.dansonhar.com), via the public/CNAME file.
+  base: '/',
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {

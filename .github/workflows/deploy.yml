@@ -31,8 +31,6 @@ jobs:
         run: npm ci
 
       - name: Build
-        env:
-          GITHUB_PAGES: "true"
         run: npm run build
 
       - name: SPA fallback (client-side routing on Pages)
