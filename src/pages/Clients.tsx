@@ -4,11 +4,13 @@ import { Plus, Search, Mail, Phone, ChevronRight } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { Avatar } from '@/components/ui/Avatar';
-import { ClientStatusBadge, TagBadge } from '@/components/ui/Badge';
+import { ClientStatusButton } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
+import { ClientFormFields, emptyClientForm } from '@/components/clients/ClientFormFields';
 import { useData } from '@/context/DataContext';
 import { useToast } from '@/context/ToastContext';
 import { formatDate } from '@/lib/utils';
+import { useUrlState } from '@/lib/useUrlState';
 import type { ClientStatus } from '@/types';
 
 const filters: { label: string; value: ClientStatus | 'all' }[] = [
@@ -22,13 +24,13 @@ export function Clients() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const { clients, addClient } = useData();
+  const { clients, addClient, updateClient } = useData();
   const { showToast } = useToast();
 
   const [query, setQuery] = useState(searchParams.get('q') ?? '');
-  const [statusFilter, setStatusFilter] = useState<ClientStatus | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useUrlState('status', 'all');
   const [modalOpen, setModalOpen] = useState(Boolean((location.state as { openNew?: boolean } | null)?.openNew));
-  const [form, setForm] = useState({ name: '', company: '', email: '', phone: '' });
+  const [form, setForm] = useState(emptyClientForm);
 
   useEffect(() => {
     const q = searchParams.get('q');
@@ -53,7 +55,7 @@ export function Clients() {
     }
     addClient(form);
     showToast(`${form.name} was added to your clients.`, 'success');
-    setForm({ name: '', company: '', email: '', phone: '' });
+    setForm(emptyClientForm);
     setModalOpen(false);
   }
 
@@ -103,10 +105,10 @@ export function Clients() {
       {/* Mobile card list */}
       <Card className="divide-y divide-slate-50 overflow-hidden p-0 dark:divide-white/[0.04] sm:hidden">
         {filtered.map((client) => (
-          <button
+          <div
             key={client.id}
             onClick={() => navigate(`/clients/${client.id}`)}
-            className="flex w-full items-center gap-3 p-4 text-left transition-colors active:bg-slate-50 dark:active:bg-white/[0.03]"
+            className="flex w-full cursor-pointer items-center gap-3 p-4 text-left transition-colors active:bg-slate-50 dark:active:bg-white/[0.03]"
           >
             <Avatar name={client.name} color={client.avatarColor} size="md" />
             <div className="min-w-0 flex-1">
@@ -116,11 +118,11 @@ export function Clients() {
               </div>
               <p className="truncate text-xs text-slate-400 dark:text-slate-500">{client.company}</p>
               <div className="mt-1.5 flex items-center gap-2">
-                <ClientStatusBadge status={client.status} />
+                <ClientStatusButton status={client.status} onChange={(status) => updateClient(client.id, { status })} />
                 <span className="text-xs text-slate-400">{formatDate(client.lastContacted)}</span>
               </div>
             </div>
-          </button>
+          </div>
         ))}
         {filtered.length === 0 && (
           <div className="px-5 py-12 text-center text-sm text-slate-400">No clients match your search.</div>
@@ -136,7 +138,6 @@ export function Clients() {
                 <th className="px-5 py-3.5 font-semibold">Client</th>
                 <th className="px-5 py-3.5 font-semibold">Contact</th>
                 <th className="px-5 py-3.5 font-semibold">Status</th>
-                <th className="px-5 py-3.5 font-semibold">Tags</th>
                 <th className="px-5 py-3.5 font-semibold">Last Contacted</th>
                 <th className="w-10 px-5 py-3.5" />
               </tr>
@@ -166,14 +167,7 @@ export function Clients() {
                     </div>
                   </td>
                   <td className="px-5 py-3.5">
-                    <ClientStatusBadge status={client.status} />
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <div className="flex flex-wrap gap-1">
-                      {client.tags.map((tag) => (
-                        <TagBadge key={tag}>{tag}</TagBadge>
-                      ))}
-                    </div>
+                    <ClientStatusButton status={client.status} onChange={(status) => updateClient(client.id, { status })} />
                   </td>
                   <td className="px-5 py-3.5 text-slate-500 dark:text-slate-400">
                     {formatDate(client.lastContacted)}
@@ -185,7 +179,7 @@ export function Clients() {
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-5 py-12 text-center text-sm text-slate-400">
+                  <td colSpan={5} className="px-5 py-12 text-center text-sm text-slate-400">
                     No clients match your search.
                   </td>
                 </tr>
@@ -196,59 +190,20 @@ export function Clients() {
       </Card>
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Add New Client">
-        <div className="space-y-4">
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-slate-500 dark:text-slate-400">Full Name</label>
-            <input
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-500/10 dark:border-white/10 dark:bg-surface-950"
-              placeholder="Jane Cooper"
-            />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-slate-500 dark:text-slate-400">Company</label>
-            <input
-              value={form.company}
-              onChange={(e) => setForm({ ...form, company: e.target.value })}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-500/10 dark:border-white/10 dark:bg-surface-950"
-              placeholder="Acme Co."
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold text-slate-500 dark:text-slate-400">Email</label>
-              <input
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-500/10 dark:border-white/10 dark:bg-surface-950"
-                placeholder="jane@acme.com"
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold text-slate-500 dark:text-slate-400">Phone</label>
-              <input
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-500/10 dark:border-white/10 dark:bg-surface-950"
-                placeholder="(555) 000-0000"
-              />
-            </div>
-          </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              onClick={() => setModalOpen(false)}
-              className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleAddClient}
-              className="rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-600"
-            >
-              Add Client
-            </button>
-          </div>
+        <ClientFormFields values={form} onChange={setForm} showStatus={false} />
+        <div className="mt-4 flex justify-end gap-2">
+          <button
+            onClick={() => setModalOpen(false)}
+            className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleAddClient}
+            className="rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-600"
+          >
+            Add Client
+          </button>
         </div>
       </Modal>
     </div>

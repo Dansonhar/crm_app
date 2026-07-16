@@ -2,12 +2,13 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { sendTelegramMessage, getTelegramUpdates } from './telegram.js';
+import { getAllData, replaceEntity, resetAll, isEntity } from './db.js';
 
 dotenv.config();
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '5mb' }));
 
 const PORT = process.env.PORT || 4000;
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
@@ -23,6 +24,47 @@ app.get('/api/health', (_req, res) => {
     notifyChatConfigured: Boolean(NOTIFY_CHAT_ID),
     uptime: process.uptime(),
   });
+});
+
+// --- CRM data persistence (SQLite via server/db.js) ---
+
+// Return the full CRM state: clients, leads, projects, invoices, tasks,
+// activities, and notes (keyed by client id).
+app.get('/api/data', (_req, res) => {
+  try {
+    res.json(getAllData());
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Replace all rows of a single entity with the provided array.
+// Body: { rows: [...] }. The frontend calls this after any local mutation.
+app.put('/api/data/:entity', (req, res) => {
+  const { entity } = req.params;
+  if (!isEntity(entity)) {
+    return res.status(404).json({ error: `Unknown entity "${entity}"` });
+  }
+  const rows = req.body?.rows;
+  if (!Array.isArray(rows)) {
+    return res.status(400).json({ error: 'Body must be { rows: [...] }' });
+  }
+  try {
+    replaceEntity(entity, rows);
+    res.json({ ok: true, count: rows.length });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Wipe every table — used by the "reset" action.
+app.post('/api/data/reset', (_req, res) => {
+  try {
+    resetAll();
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Helper for finding a client's chat ID: have them message the bot once,

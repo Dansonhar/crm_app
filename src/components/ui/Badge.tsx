@@ -30,6 +30,39 @@ export function ClientStatusBadge({ status }: { status: ClientStatus }) {
   );
 }
 
+// Cycle order used when the status badge is clicked to change it inline.
+const clientStatusCycle: ClientStatus[] = ['lead', 'active', 'inactive'];
+
+// A clickable status badge — clicking cycles to the next status and fires
+// onChange immediately (used in the clients table, list, and detail header).
+export function ClientStatusButton({
+  status,
+  onChange,
+}: {
+  status: ClientStatus;
+  onChange: (next: ClientStatus) => void;
+}) {
+  const next = clientStatusCycle[(clientStatusCycle.indexOf(status) + 1) % clientStatusCycle.length];
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        onChange(next);
+      }}
+      title={`Click to set status to ${next[0].toUpperCase() + next.slice(1)}`}
+      className={cn(
+        'inline-flex cursor-pointer items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium leading-none whitespace-nowrap transition hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40',
+        clientStatusStyles[status],
+      )}
+    >
+      <span className="size-1.5 rounded-full bg-current" />
+      {status[0].toUpperCase() + status.slice(1)}
+    </button>
+  );
+}
+
 const invoiceStatusStyles: Record<InvoiceStatus, string> = {
   paid: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
   pending: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',

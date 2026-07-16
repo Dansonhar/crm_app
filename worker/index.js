@@ -1,6 +1,6 @@
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
 };
 
@@ -9,6 +9,114 @@ function json(data, status = 200) {
     status,
     headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
   });
+}
+
+// --- CRM data persistence (Cloudflare D1) ---
+//
+// Mirrors the local Express server (server/db.js) so the frontend's data API
+// (fetchAllData / persistEntity / resetAllData in src/lib/api.ts) works
+// identically against the deployed Worker. Each entity is its own table;
+// JSON columns hold serialized arrays.
+
+const TABLES = {
+  clients: {
+    columns: ['id', 'name', 'company', 'email', 'phone', 'status', 'industry', 'website', 'address', 'lastContacted', 'createdAt', 'avatarColor', 'tags', 'telegramChatId', 'telegramUsername'],
+    json: ['tags'],
+  },
+  leads: {
+    columns: ['id', 'clientName', 'company', 'dealValue', 'source', 'priority', 'nextFollowUp', 'stage', 'avatarColor'],
+    json: [],
+  },
+  projects: {
+    columns: ['id', 'name', 'clientId', 'clientName', 'deadline', 'progress', 'status', 'team', 'deliverables', 'budget'],
+    json: ['team', 'deliverables'],
+  },
+  invoices: {
+    columns: ['id', 'number', 'clientId', 'clientName', 'amount', 'issueDate', 'dueDate', 'status', 'items'],
+    json: ['items'],
+  },
+  tasks: {
+    columns: ['id', 'title', 'priority', 'dueDate', 'clientId', 'clientName', 'status', 'category'],
+    json: [],
+  },
+  activities: {
+    columns: ['id', 'type', 'description', 'timestamp', 'clientId', 'clientName'],
+    json: [],
+  },
+  notes: {
+    columns: ['id', 'clientId', 'author', 'content', 'createdAt'],
+    json: [],
+  },
+};
+
+const ENTITIES = Object.keys(TABLES);
+const isEntity = (name) => ENTITIES.includes(name);
+
+// Turn a row object into an ordered value array for a parameterized INSERT.
+function serializeRow(table, row) {
+  const { columns, json } = TABLES[table];
+  return columns.map((name) => {
+    if (json.includes(name)) return JSON.stringify(row[name] ?? []);
+    return row[name] === undefined ? null : row[name];
+  });
+}
+
+// Turn a stored DB row back into the shape the frontend expects.
+function deserializeRow(table, row) {
+  const { json } = TABLES[table];
+  const out = {};
+  for (const [key, value] of Object.entries(row)) {
+    if (value === null) continue; // drop empty optional fields
+    out[key] = json.includes(key) ? JSON.parse(value) : value;
+  }
+  for (const key of json) {
+    if (out[key] === undefined) out[key] = [];
+  }
+  return out;
+}
+
+async function getEntityRows(env, table) {
+  const { results } = await env.DB.prepare(`SELECT * FROM "${table}"`).all();
+  return (results ?? []).map((r) => deserializeRow(table, r));
+}
+
+// Assemble the full CRM state; notes are reshaped into Record<clientId, ClientNote[]>.
+async function handleGetData(env) {
+  const data = {};
+  for (const table of ENTITIES) {
+    if (table === 'notes') continue;
+    data[table] = await getEntityRows(env, table);
+  }
+  const notes = {};
+  for (const note of await getEntityRows(env, 'notes')) {
+    const { clientId, ...rest } = note;
+    (notes[clientId] ??= []).push(rest);
+  }
+  data.notes = notes;
+  return json(data);
+}
+
+// Replace all rows of one table with the provided array (atomic D1 batch).
+async function handlePutEntity(entity, request, env) {
+  const body = await request.json().catch(() => ({}));
+  const rows = body?.rows;
+  if (!Array.isArray(rows)) {
+    return json({ error: 'Body must be { rows: [...] }' }, 400);
+  }
+  const { columns } = TABLES[entity];
+  const placeholders = columns.map(() => '?').join(', ');
+  const insertSql = `INSERT INTO "${entity}" (${columns.map((n) => `"${n}"`).join(', ')}) VALUES (${placeholders})`;
+  const statements = [env.DB.prepare(`DELETE FROM "${entity}"`)];
+  for (const row of rows) {
+    statements.push(env.DB.prepare(insertSql).bind(...serializeRow(entity, row)));
+  }
+  await env.DB.batch(statements);
+  return json({ ok: true, count: rows.length });
+}
+
+async function handleResetData(env) {
+  await env.DB.batch(ENTITIES.map((table) => env.DB.prepare(`DELETE FROM "${table}"`)));
+  return json({ ok: true });
 }
 
 async function sendTelegramMessage(botToken, chatId, text, options = {}) {
@@ -113,6 +221,32 @@ export default {
     if (url.pathname === '/api/notify' && request.method === 'POST') {
       return handleNotify(request, env);
     }
+
+    // --- CRM data API (Cloudflare D1) ---
+    if (url.pathname.startsWith('/api/data')) {
+      if (!env.DB) {
+        return json({ error: 'D1 database binding "DB" is not configured on this Worker.' }, 500);
+      }
+      try {
+        if (url.pathname === '/api/data' && request.method === 'GET') {
+          return await handleGetData(env);
+        }
+        if (url.pathname === '/api/data/reset' && request.method === 'POST') {
+          return await handleResetData(env);
+        }
+        const entityMatch = url.pathname.match(/^\/api\/data\/([^/]+)$/);
+        if (entityMatch && request.method === 'PUT') {
+          const entity = entityMatch[1];
+          if (!isEntity(entity)) {
+            return json({ error: `Unknown entity "${entity}"` }, 404);
+          }
+          return await handlePutEntity(entity, request, env);
+        }
+      } catch (err) {
+        return json({ error: err.message }, 500);
+      }
+    }
+
     return json({ error: 'Not found' }, 404);
   },
 

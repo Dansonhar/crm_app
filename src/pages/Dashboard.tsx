@@ -82,7 +82,7 @@ export function Dashboard() {
   const [sendingSummary, setSendingSummary] = useState(false);
   const activeProjects = projects.filter((p) => p.status !== 'completed').length;
   const pendingInvoices = invoices.filter((i) => i.status !== 'paid').length;
-  const monthlyRevenue = revenueByMonth[revenueByMonth.length - 1].revenue;
+  const monthlyRevenue = revenueByMonth.at(-1)?.revenue ?? 0;
   const upcomingTasks = tasks
     .filter((t) => t.status === 'pending')
     .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())

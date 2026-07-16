@@ -53,3 +53,8 @@ diag-*.png
 .wrangler
 .dev.vars
 .cf-token
+
+# Local SQLite database (server/db.js) — runtime data, not committed
+server/*.sqlite
+server/*.sqlite-shm
+server/*.sqlite-wal

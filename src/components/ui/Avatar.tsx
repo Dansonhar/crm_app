@@ -8,10 +8,11 @@ export function Avatar({
 }: {
   name: string;
   color?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
   className?: string;
 }) {
   const sizes = {
+    xs: 'size-5 text-[9px] ring-0',
     sm: 'size-7 text-[11px]',
     md: 'size-9 text-xs',
     lg: 'size-14 text-lg',

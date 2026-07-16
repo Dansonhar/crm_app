@@ -8,3 +8,11 @@ crons = ["0 1 * * *"]
 
 # Secrets (TELEGRAM_BOT_TOKEN, TELEGRAM_BOT_USERNAME, NOTIFY_CHAT_ID, AGENCY_NAME)
 # are set via `wrangler secret put <NAME>`, not committed here.
+
+# Cloudflare D1 — cloud SQLite database for CRM data persistence in production.
+# Create it once with:  npx wrangler d1 create agencyflow-crm-db
+# then paste the printed database_id below (replacing the placeholder).
+[[d1_databases]]
+binding = "DB"
+database_name = "agencyflow-crm-db"
+database_id = "56f797da-5f96-403a-bd41-c413fd6b8084"

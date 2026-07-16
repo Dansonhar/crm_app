@@ -9,6 +9,7 @@ import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { useData } from '@/context/DataContext';
 import { useToast } from '@/context/ToastContext';
 import { cn, formatDate } from '@/lib/utils';
+import { useUrlState } from '@/lib/useUrlState';
 import type { Priority, Task } from '@/types';
 
 const inputClass =
@@ -43,7 +44,7 @@ export function Tasks() {
   const { showToast } = useToast();
 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('pending');
+  const [filter, setFilter] = useUrlState('filter', 'pending');
   const [addOpen, setAddOpen] = useState(Boolean((location.state as { openNew?: boolean } | null)?.openNew));
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [deletingTask, setDeletingTask] = useState<Task | null>(null);

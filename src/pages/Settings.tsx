@@ -23,6 +23,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { cn } from '@/lib/utils';
+import { useUrlState } from '@/lib/useUrlState';
 
 const tabs = [
   { id: 'profile', label: 'Profile', icon: User },
@@ -83,7 +84,7 @@ export function Settings() {
   const { showToast } = useToast();
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState('profile');
+  const [activeTab, setActiveTab] = useUrlState('tab', 'profile');
   const [notifs, setNotifs] = useState({ email: true, push: false, weeklyDigest: true, invoiceReminders: true });
 
   const [profileForm, setProfileForm] = useState({

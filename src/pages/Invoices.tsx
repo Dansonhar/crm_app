@@ -10,6 +10,7 @@ import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { useData } from '@/context/DataContext';
 import { useToast } from '@/context/ToastContext';
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
+import { useUrlState } from '@/lib/useUrlState';
 import type { InvoiceStatus } from '@/types';
 
 const filters: { label: string; value: InvoiceStatus | 'all' }[] = [
@@ -32,7 +33,7 @@ export function Invoices() {
   const { showToast } = useToast();
 
   const [query, setQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<InvoiceStatus | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useUrlState('status', 'all');
   const [addOpen, setAddOpen] = useState(Boolean((location.state as { openNew?: boolean } | null)?.openNew));
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);

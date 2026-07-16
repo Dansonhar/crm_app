@@ -17,10 +17,11 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Avatar } from '@/components/ui/Avatar';
-import { ClientStatusBadge, InvoiceStatusBadge, ProjectStatusBadge, TagBadge } from '@/components/ui/Badge';
+import { ClientStatusButton, InvoiceStatusBadge, ProjectStatusBadge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { AddProjectModal } from '@/components/projects/AddProjectModal';
+import { ClientFormFields, type ClientFormValues } from '@/components/clients/ClientFormFields';
 import { useData } from '@/context/DataContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
@@ -28,17 +29,10 @@ import { formatCurrency, formatDate, timeAgo } from '@/lib/utils';
 import { sendTelegramMessage } from '@/lib/telegram';
 import type { ClientStatus } from '@/types';
 
-const inputClass =
-  'w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-500/10 dark:border-white/10 dark:bg-surface-950 dark:text-slate-200';
-
-function FieldLabel({ children }: { children: string }) {
-  return <label className="mb-1.5 block text-xs font-semibold text-slate-500 dark:text-slate-400">{children}</label>;
-}
-
 export function ClientDetail() {
   const { clientId } = useParams();
   const navigate = useNavigate();
-  const { clients, projects, invoices, tasks, activities, notes: allNotes, updateClient, deleteClient, addNote, deleteNote, logMessageSent } = useData();
+  const { clients, projects, invoices, tasks, activities, notes: allNotes, updateClient, deleteClient, addNote, deleteNote, logMessageSent, loading } = useData();
   const { currentUser } = useAuth();
   const { showToast } = useToast();
   const client = clients.find((c) => c.id === clientId);
@@ -50,7 +44,7 @@ export function ClientDetail() {
   const [editOpen, setEditOpen] = useState(false);
   const [projectModalOpen, setProjectModalOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [editForm, setEditForm] = useState(() => ({
+  const [editForm, setEditForm] = useState<ClientFormValues>(() => ({
     name: client?.name ?? '',
     company: client?.company ?? '',
     email: client?.email ?? '',
@@ -72,6 +66,16 @@ export function ClientDetail() {
   const clientActivities = useMemo(() => activities.filter((a) => a.clientId === clientId), [activities, clientId]);
 
   if (!client) {
+    // On a hard refresh the client list loads from the database asynchronously —
+    // show a loader until that finishes so we don't flash a false "not found".
+    if (loading) {
+      return (
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+          <div className="size-8 animate-spin rounded-full border-2 border-slate-200 border-t-brand-500 dark:border-white/10 dark:border-t-brand-400" />
+          <p className="mt-4 text-sm font-medium text-slate-400">Loading client…</p>
+        </div>
+      );
+    }
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
         <p className="text-lg font-semibold text-slate-700 dark:text-slate-200">Client not found</p>
@@ -161,14 +165,9 @@ export function ClientDetail() {
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-xl font-bold text-slate-900 dark:text-white">{client.name}</h1>
-                <ClientStatusBadge status={client.status} />
+                <ClientStatusButton status={client.status} onChange={(status) => updateClient(client.id, { status })} />
               </div>
               <p className="text-sm text-slate-500 dark:text-slate-400">{client.company} &middot; {client.industry}</p>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {client.tags.map((t) => (
-                  <TagBadge key={t}>{t}</TagBadge>
-                ))}
-              </div>
             </div>
           </div>
           <div className="flex gap-2">
@@ -410,86 +409,14 @@ export function ClientDetail() {
       </div>
 
       <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Edit Client Profile">
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <FieldLabel>Full Name</FieldLabel>
-              <input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className={inputClass} />
-            </div>
-            <div>
-              <FieldLabel>Company</FieldLabel>
-              <input value={editForm.company} onChange={(e) => setEditForm({ ...editForm, company: e.target.value })} className={inputClass} />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <FieldLabel>Email</FieldLabel>
-              <input value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} className={inputClass} />
-            </div>
-            <div>
-              <FieldLabel>Phone</FieldLabel>
-              <input value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} className={inputClass} />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <FieldLabel>Industry</FieldLabel>
-              <input value={editForm.industry} onChange={(e) => setEditForm({ ...editForm, industry: e.target.value })} className={inputClass} />
-            </div>
-            <div>
-              <FieldLabel>Status</FieldLabel>
-              <select
-                value={editForm.status}
-                onChange={(e) => setEditForm({ ...editForm, status: e.target.value as ClientStatus })}
-                className={inputClass}
-              >
-                <option value="active">Active</option>
-                <option value="lead">Lead</option>
-                <option value="inactive">Inactive</option>
-              </select>
-            </div>
-          </div>
-          <div>
-            <FieldLabel>Website</FieldLabel>
-            <input value={editForm.website} onChange={(e) => setEditForm({ ...editForm, website: e.target.value })} className={inputClass} />
-          </div>
-          <div>
-            <FieldLabel>Address</FieldLabel>
-            <input value={editForm.address} onChange={(e) => setEditForm({ ...editForm, address: e.target.value })} className={inputClass} />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <FieldLabel>Telegram Chat ID</FieldLabel>
-              <input
-                value={editForm.telegramChatId}
-                onChange={(e) => setEditForm({ ...editForm, telegramChatId: e.target.value })}
-                placeholder="e.g. 123456789"
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <FieldLabel>Telegram Username</FieldLabel>
-              <input
-                value={editForm.telegramUsername}
-                onChange={(e) => setEditForm({ ...editForm, telegramUsername: e.target.value })}
-                placeholder="optional, for display only"
-                className={inputClass}
-              />
-            </div>
-          </div>
-          <p className="-mt-2 text-xs text-slate-400">
-            The client must message the bot at least once before you can message them. Run the server and check
-            <code className="mx-1 rounded bg-slate-100 px-1 py-0.5 dark:bg-white/10">GET /api/telegram/updates</code>
-            to find their Chat ID.
-          </p>
-          <div className="flex justify-end gap-2 pt-2">
-            <button onClick={() => setEditOpen(false)} className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5">
-              Cancel
-            </button>
-            <button onClick={handleSaveProfile} className="rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-600">
-              Save Changes
-            </button>
-          </div>
+        <ClientFormFields values={editForm} onChange={setEditForm} />
+        <div className="mt-4 flex justify-end gap-2">
+          <button onClick={() => setEditOpen(false)} className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5">
+            Cancel
+          </button>
+          <button onClick={handleSaveProfile} className="rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-600">
+            Save Changes
+          </button>
         </div>
       </Modal>
 

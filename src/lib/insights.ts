@@ -360,15 +360,18 @@ export function computeInsight(id: string, data: InsightData): Insight {
       const unpaid = invoices.filter((i) => i.status !== 'paid');
       const outstanding = unpaid.reduce((s, i) => s + i.amount, 0);
       const pendingTasks = tasks.filter((t) => t.status === 'pending').length;
-      const last = revenueByMonth[revenueByMonth.length - 1];
-      const prev = revenueByMonth[revenueByMonth.length - 2];
-      const change = prev && prev.revenue ? ((last.revenue - prev.revenue) / prev.revenue) * 100 : 0;
+      const last = revenueByMonth.at(-1);
+      const prev = revenueByMonth.at(-2);
+      const change = last && prev && prev.revenue ? ((last.revenue - prev.revenue) / prev.revenue) * 100 : 0;
+      const revenueBullet = last
+        ? `💵 ${last.month} revenue ${formatCurrency(last.revenue)} (${change >= 0 ? '+' : ''}${change.toFixed(1)}% vs ${prev?.month ?? '—'})`
+        : '💵 No revenue recorded yet';
       return {
         headline: 'Here’s your agency at a glance:',
         bullets: [
           `👥 ${clients.length} clients · ${activeProjects} active projects`,
           `💼 ${active.length} open deals worth ${formatCurrency(pipelineValue)}`,
-          `💵 ${last.month} revenue ${formatCurrency(last.revenue)} (${change >= 0 ? '+' : ''}${change.toFixed(1)}% vs ${prev?.month ?? '—'})`,
+          revenueBullet,
           `🧾 ${formatCurrency(outstanding)} outstanding · ${pendingTasks} open tasks`,
         ],
         tone: change >= 0 ? 'positive' : 'negative',

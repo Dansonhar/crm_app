@@ -14,7 +14,9 @@ export interface Member {
   password?: string;
 }
 
-const STORAGE_KEY = 'agencyflow-members';
+// Bumped to -v2 to force a reset of the team roster in browsers that already
+// cached the old demo members under the previous key.
+const STORAGE_KEY = 'agencyflow-members-v2';
 const SESSION_KEY = 'agencyflow-current-user';
 
 export const DEMO_CREDENTIALS = { username: 'AGENCY', password: 'agency' };
@@ -42,6 +44,8 @@ function getInitials(name: string) {
     .toUpperCase();
 }
 
+// Reset — the workspace starts with only the owner/admin account (which holds
+// the login credentials). Add teammates via Settings → Team Members → Add Member.
 const seedMembers: Member[] = [
   {
     id: 'm-admin',
@@ -54,11 +58,6 @@ const seedMembers: Member[] = [
     username: DEMO_CREDENTIALS.username,
     password: DEMO_CREDENTIALS.password,
   },
-  { id: 'm-2', name: 'Jordan Mills', email: 'jordan.mills@agencyflow.com', role: 'Lead Designer', avatarColor: 'bg-emerald-500', initials: 'JM', status: 'active' },
-  { id: 'm-3', name: 'Tom Reyes', email: 'tom.reyes@agencyflow.com', role: 'Video Producer', avatarColor: 'bg-amber-500', initials: 'TR', status: 'active' },
-  { id: 'm-4', name: 'Lena Park', email: 'lena.park@agencyflow.com', role: 'Marketing Strategist', avatarColor: 'bg-rose-500', initials: 'LP', status: 'active' },
-  { id: 'm-5', name: 'Sophie Kim', email: 'sophie.kim@agencyflow.com', role: 'Account Manager', avatarColor: 'bg-sky-500', initials: 'SK', status: 'active' },
-  { id: 'm-6', name: 'Ravi Watsa', email: 'ravi.watsa@agencyflow.com', role: 'Frontend Engineer', avatarColor: 'bg-violet-500', initials: 'RW', status: 'active' },
 ];
 
 function loadMembers(): Member[] {

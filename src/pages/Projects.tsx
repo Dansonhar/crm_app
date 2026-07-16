@@ -7,20 +7,20 @@ import { Avatar } from '@/components/ui/Avatar';
 import { ProjectStatusBadge } from '@/components/ui/Badge';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { AddProjectModal } from '@/components/projects/AddProjectModal';
-import { teamMembers } from '@/data/mockData';
 import { useData } from '@/context/DataContext';
+import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
 import type { Project } from '@/types';
 
-function teamMember(initials: string) {
-  return teamMembers.find((m) => m.initials === initials);
-}
-
 export function Projects() {
   const location = useLocation();
   const { projects, toggleDeliverable, deleteProject } = useData();
+  const { members } = useAuth();
   const { showToast } = useToast();
+
+  // Team members are the people added in Settings → Team Members, referenced by id.
+  const teamMember = (id: string) => members.find((m) => m.id === id);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(Boolean((location.state as { openNew?: boolean } | null)?.openNew));
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -97,9 +97,9 @@ export function Projects() {
 
               <div className="mt-3 flex items-center justify-between gap-2 sm:mt-4">
                 <div className="flex -space-x-2">
-                  {project.team.map((initial) => {
-                    const member = teamMember(initial);
-                    return <Avatar key={initial} name={member?.name ?? initial} color={member?.color} size="sm" />;
+                  {project.team.map((memberId) => {
+                    const member = teamMember(memberId);
+                    return <Avatar key={memberId} name={member?.name ?? '?'} color={member?.avatarColor} size="sm" />;
                   })}
                   {project.team.length === 0 && <span className="text-xs text-slate-400">Unassigned</span>}
                 </div>

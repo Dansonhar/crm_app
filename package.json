@@ -5,12 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "server": "node server/index.js",
-    "server:watch": "node --watch server/index.js",
+    "server": "node --experimental-sqlite server/index.js",
+    "server:watch": "node --watch --experimental-sqlite server/index.js",
     "dev:all": "concurrently -n web,server -c blue,green \"npm:dev\" \"npm:server\"",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
+    "d1:create": "wrangler d1 create agencyflow-crm-db",
+    "d1:migrate": "wrangler d1 execute agencyflow-crm-db --file=./schema.sql --remote",
+    "d1:migrate:local": "wrangler d1 execute agencyflow-crm-db --file=./schema.sql --local",
     "deploy:worker": "wrangler deploy",
     "deploy:pages": "npm run build && wrangler pages deploy dist --project-name=agencyflow-crm"
   },

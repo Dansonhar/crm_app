@@ -1,5 +1,19 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type MutableRefObject,
+  type ReactNode,
+} from 'react';
 import { notifyTeam, formatEventAlert, priorityEmoji } from '@/lib/telegram';
+import {
+  fetchAllData,
+  persistEntity,
+  flattenNotes,
+  type PersistableEntity,
+} from '@/lib/api';
 import {
   clients as seedClients,
   projects as seedProjects,
@@ -15,6 +29,8 @@ import type {
   ActivityType,
   Client,
   ClientNote,
+  ClientStatus,
+  Deliverable,
   Invoice,
   InvoiceStatus,
   Lead,
@@ -27,7 +43,18 @@ import type {
 
 interface DataContextValue {
   clients: Client[];
-  addClient: (input: { name: string; company: string; email: string; phone: string }) => Client;
+  addClient: (input: {
+    name: string;
+    company: string;
+    email: string;
+    phone: string;
+    industry?: string;
+    website?: string;
+    address?: string;
+    status?: ClientStatus;
+    telegramChatId?: string;
+    telegramUsername?: string;
+  }) => Client;
   updateClient: (id: string, updates: Partial<Client>) => void;
   deleteClient: (id: string) => void;
 
@@ -38,6 +65,9 @@ interface DataContextValue {
     clientName: string;
     deadline: string;
     budget: number;
+    status?: ProjectStatus;
+    team?: string[];
+    deliverables?: { label: string; done?: boolean }[];
   }) => Project;
   updateProject: (id: string, updates: Partial<Project>) => void;
   deleteProject: (id: string) => void;
@@ -87,6 +117,10 @@ interface DataContextValue {
 
   activities: Activity[];
   logMessageSent: (clientId: string, clientName: string, preview: string) => void;
+
+  // True while the initial load from the database is in flight. Pages use this
+  // to show a loading state on refresh instead of a premature "not found".
+  loading: boolean;
 }
 
 const DataContext = createContext<DataContextValue | undefined>(undefined);
@@ -101,6 +135,52 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [leads, setLeads] = useState<Lead[]>(seedLeads);
   const [notes, setNotes] = useState<Record<string, ClientNote[]>>(seedNotes);
   const [activities, setActivities] = useState<Activity[]>(seedActivities);
+
+  // Becomes true once the initial load from the database has finished. Until
+  // then we don't persist, so we never overwrite saved data with empty seeds.
+  const hydratedRef = useRef(false);
+  const [loading, setLoading] = useState(true);
+
+  // Load persisted CRM state from the SQLite-backed API on mount.
+  useEffect(() => {
+    let cancelled = false;
+    fetchAllData()
+      .then((data) => {
+        if (cancelled) return;
+        setClients(data.clients ?? []);
+        setLeads(data.leads ?? []);
+        setProjects(data.projects ?? []);
+        setInvoices(data.invoices ?? []);
+        setTasks(data.tasks ?? []);
+        setActivities(data.activities ?? []);
+        setNotes(data.notes ?? {});
+        // Keep new invoice numbers ahead of anything already stored.
+        for (const inv of data.invoices ?? []) {
+          const n = Number(String(inv.number ?? '').replace(/\D/g, ''));
+          if (Number.isFinite(n) && n > invoiceCounter) invoiceCounter = n;
+        }
+      })
+      .catch((err) => {
+        console.warn('Could not load saved data:', err instanceof Error ? err.message : err);
+      })
+      .finally(() => {
+        if (cancelled) return;
+        hydratedRef.current = true;
+        setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Persist each entity back to the database whenever it changes (debounced).
+  usePersistEntity('clients', clients, (v) => v, hydratedRef);
+  usePersistEntity('leads', leads, (v) => v, hydratedRef);
+  usePersistEntity('projects', projects, (v) => v, hydratedRef);
+  usePersistEntity('invoices', invoices, (v) => v, hydratedRef);
+  usePersistEntity('tasks', tasks, (v) => v, hydratedRef);
+  usePersistEntity('activities', activities, (v) => v, hydratedRef);
+  usePersistEntity('notes', notes, flattenNotes, hydratedRef);
 
   function notify(text: string) {
     notifyTeam(text).catch((err) => {
@@ -120,21 +200,34 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setActivities((prev) => [activity, ...prev]);
   }
 
-  function addClient(input: { name: string; company: string; email: string; phone: string }) {
+  function addClient(input: {
+    name: string;
+    company: string;
+    email: string;
+    phone: string;
+    industry?: string;
+    website?: string;
+    address?: string;
+    status?: ClientStatus;
+    telegramChatId?: string;
+    telegramUsername?: string;
+  }) {
     const newClient: Client = {
       id: `c${Date.now()}`,
       name: input.name,
       company: input.company,
       email: input.email || 'unknown@example.com',
       phone: input.phone || '—',
-      status: 'lead',
-      industry: 'General',
-      website: '',
-      address: '',
+      status: input.status ?? 'lead',
+      industry: input.industry?.trim() || 'General',
+      website: input.website?.trim() ?? '',
+      address: input.address?.trim() ?? '',
       lastContacted: new Date().toISOString().slice(0, 10),
       createdAt: new Date().toISOString().slice(0, 10),
       avatarColor: avatarColors[clients.length % avatarColors.length],
       tags: ['New'],
+      ...(input.telegramChatId?.trim() ? { telegramChatId: input.telegramChatId.trim() } : {}),
+      ...(input.telegramUsername?.trim() ? { telegramUsername: input.telegramUsername.trim() } : {}),
     };
     setClients((prev) => [newClient, ...prev]);
     logActivity({
@@ -166,18 +259,32 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  function addProject(input: { name: string; clientId: string; clientName: string; deadline: string; budget: number }) {
+  function addProject(input: {
+    name: string;
+    clientId: string;
+    clientName: string;
+    deadline: string;
+    budget: number;
+    status?: ProjectStatus;
+    team?: string[];
+    deliverables?: { label: string; done?: boolean }[];
+  }) {
+    const baseDeliverables = (input.deliverables ?? []).filter((d) => d.label.trim());
+    const deliverables: Deliverable[] =
+      baseDeliverables.length > 0
+        ? baseDeliverables.map((d, i) => ({ id: `d${Date.now()}-${i}`, label: d.label.trim(), done: Boolean(d.done) }))
+        : [{ id: `d${Date.now()}`, label: 'Kickoff & discovery', done: false }];
     const newProject: Project = {
       id: `p${Date.now()}`,
       name: input.name,
       clientId: input.clientId,
       clientName: input.clientName,
       deadline: input.deadline,
-      progress: 0,
-      status: 'on-track',
-      team: [],
+      progress: progressFromDeliverables(deliverables),
+      status: input.status ?? 'on-track',
+      team: input.team ?? [],
       budget: input.budget,
-      deliverables: [{ id: `d${Date.now()}`, label: 'Kickoff & discovery', done: false }],
+      deliverables,
     };
     setProjects((prev) => [newProject, ...prev]);
     logActivity({
@@ -202,7 +309,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }
 
   function updateProject(id: string, updates: Partial<Project>) {
-    setProjects((prev) => prev.map((p) => (p.id === id ? { ...p, ...updates } : p)));
+    setProjects((prev) =>
+      prev.map((p) => {
+        if (p.id !== id) return p;
+        const merged = { ...p, ...updates };
+        // Progress always follows the ticked deliverables.
+        if (updates.deliverables) merged.progress = progressFromDeliverables(merged.deliverables);
+        return merged;
+      }),
+    );
     const project = projects.find((p) => p.id === id);
     if (project && updates.status && updates.status !== project.status) {
       logActivity({
@@ -232,12 +347,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
       prev.map((p) =>
         p.id !== projectId
           ? p
-          : {
-              ...p,
-              deliverables: p.deliverables.map((d) =>
+          : (() => {
+              const deliverables = p.deliverables.map((d) =>
                 d.id === deliverableId ? { ...d, done: !d.done } : d,
-              ),
-            },
+              );
+              return { ...p, deliverables, progress: progressFromDeliverables(deliverables) };
+            })(),
       ),
     );
   }
@@ -506,6 +621,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         deleteNote,
         activities,
         logMessageSent,
+        loading,
       }}
     >
       {children}
@@ -513,8 +629,36 @@ export function DataProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// Debounced persistence of one entity slice to the database. Skips writes until
+// the initial hydration has completed (guarded by `enabledRef`).
+function usePersistEntity<T>(
+  entity: PersistableEntity,
+  value: T,
+  toRows: (value: T) => unknown[],
+  enabledRef: MutableRefObject<boolean>,
+) {
+  useEffect(() => {
+    if (!enabledRef.current) return;
+    const handle = setTimeout(() => {
+      persistEntity(entity, toRows(value)).catch((err) => {
+        console.warn(`Failed to save ${entity}:`, err instanceof Error ? err.message : err);
+      });
+    }, 300);
+    return () => clearTimeout(handle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+}
+
 function formatProjectStatus(status: ProjectStatus) {
   return status.replace('-', ' ');
+}
+
+// Progress is derived from how many deliverables are ticked: none ticked → 0%,
+// all ticked → 100%, otherwise the average completion across the checklist.
+function progressFromDeliverables(deliverables: Deliverable[]) {
+  if (deliverables.length === 0) return 0;
+  const done = deliverables.filter((d) => d.done).length;
+  return Math.round((done / deliverables.length) * 100);
 }
 
 function formatLeadStage(stage: LeadStage) {
